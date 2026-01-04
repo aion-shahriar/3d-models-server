@@ -27,7 +27,35 @@ async function run() {
   try {
     await client.connect();
 
-    
+    const db = client.db('model-DB');
+    const modelsCollection = db.collection('models');
+
+    // get method
+    // find
+    // findOne
+
+    app.get('/models', async(req,res)=> {
+
+        const result = await modelsCollection.find().toArray(); 
+        res.send(result);
+    })
+
+    // post method
+    // insertMany
+    // insertOne
+
+    app.post('/models', async(req,res)=> {
+        const data = req.body;
+        console.log(data);
+        const result = modelsCollection.insertOne(data);
+
+        res.send({
+            success: true,
+            result
+        })
+    })
+
+
     
 
 
