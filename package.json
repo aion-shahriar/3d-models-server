@@ -19,6 +19,8 @@
   },
   "homepage": "https://github.com/aion-shahriar/3d-models-server#readme",
   "dependencies": {
-    "express": "^5.2.1"
+    "cors": "^2.8.5",
+    "express": "^5.2.1",
+    "mongodb": "^7.0.0"
   }
 }
