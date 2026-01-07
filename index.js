@@ -67,6 +67,30 @@ async function run() {
         })
     })
 
+    // put method
+    // updateOne
+    // updateMany
+
+    app.put('/models/:id', async(req,res)=> {
+        const {id} = req.params;
+        const data = req.body;
+        const objectId = new ObjectId(id);
+
+        const filter = {_id: objectId};
+        const update = {
+            $set: data
+        }
+
+        const result = await modelsCollection.updateOne(filter,update);
+
+        res.send({
+            success: true,
+            result
+        })
+    })
+
+    
+
 
     
 
