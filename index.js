@@ -89,6 +89,23 @@ async function run() {
         })
     })
 
+    // delete method
+    // deleteOne
+    // deleteMany
+
+    app.delete('/models/:id', async(req,res) => {
+        const {id} = req.params;
+
+        const objectId = new ObjectId(id);
+        const filter = {_id : objectId};
+
+        const result = await modelsCollection.deleteOne(filter);
+        res.send({
+            success: true,
+            result
+        })
+    })
+
     
 
 
