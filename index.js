@@ -106,6 +106,13 @@ async function run() {
         })
     })
 
+    // latest 6 data
+    app.get('/latest-models', async(req,res)=> {
+        const result= await modelsCollection.find().sort({created_at: 'desc'}).limit(6).toArray();
+
+        res.send(result);
+    })
+
     
 
 
