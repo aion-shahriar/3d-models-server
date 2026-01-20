@@ -3,6 +3,12 @@
 const express = require('express')
 const cors = require('cors')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+require("dotenv").config()
+
+const admin = require("firebase-admin");
+
+const serviceAccount = require("./serviceAccountKey.json");
+
 const app = express()
 const port = 3000
 
@@ -12,7 +18,13 @@ app.use(express.json())
 
 
 
-const uri = "mongodb+srv://model-DB:ekB1jlIQia5rB16n@cluster0.3tedund.mongodb.net/?appName=Cluster0";
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+
+
+
+const uri = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@cluster0.3tedund.mongodb.net/?appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -23,18 +35,48 @@ const client = new MongoClient(uri, {
   }
 });
 
+const verifyToken= async(req,res,next) => {
+    const authorization = req.headers.authorization;
+
+    if(!authorization) {
+        return res.status(401).send({
+            message: "Unauthorized access. Token not found."
+        })
+    }
+
+    const token = authorization.split(' ')[1];
+
+    
+
+    
+
+    try {
+        await admin.auth().verifyIdToken(token)
+        next();
+    }
+    catch {
+        res.status(401).send({
+            message: "unauthorized access."
+        })
+    }
+
+
+    
+}
+
 async function run() {
   try {
     await client.connect();
 
     const db = client.db('model-DB');
     const modelsCollection = db.collection('models');
+    const downloadsCollection = db.collection('models');
 
     // get method
     // find
     // findOne
 
-    app.get('/models', async(req,res)=> {
+    app.get('/models',  async(req,res)=> {
 
         const result = await modelsCollection.find().toArray(); 
         res.send(result);
@@ -71,7 +113,7 @@ async function run() {
     // updateOne
     // updateMany
 
-    app.put('/models/:id', async(req,res)=> {
+    app.put('/models/:id',  async(req,res)=> {
         const {id} = req.params;
         const data = req.body;
         const objectId = new ObjectId(id);
@@ -111,6 +153,45 @@ async function run() {
         const result= await modelsCollection.find().sort({created_at: 'desc'}).limit(6).toArray();
 
         res.send(result);
+    })
+
+
+    app.get('/my-models', async(req,res)=> {
+        const email = req.query.email;
+        const result = await modelsCollection.find({created_by: email}).toArray();
+        res.send(result);
+    })
+
+
+    app.post('/downloads/:id', async(req,res)=> {
+        const data = req.body;
+        const id = req.params.id;
+        // downloads collection
+        const result = await downloadsCollection.insertOne(data);
+
+
+        // downloads count
+        const filter = {_id : new ObjectId(id)};
+        const update = {
+            $inc: {
+                downloads: 1
+            }
+        }
+        const downloadCount = await modelsCollection.updateOne(filter, update);
+        res.send({result, downloadCount});
+
+    })
+
+    app.get('/my-downloads', async(req,res)=> {
+        const email = req.query.email;
+        const result = await downloadsCollection.find({downloaded_by: email}).toArray();
+        res.send(result);
+    })
+
+    app.get('/search', async(req,res)=> {
+        const search_text=req.body;
+        const result = await modelsCollection.find({name: {$regex: search_text, $options: "i"}}).toArray();
+        res.send(result)
     })
 
     
